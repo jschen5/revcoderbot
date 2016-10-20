@@ -24,19 +24,19 @@ bot.dialog('/', dialog);
 
 server.post('/', connector.listen());
 
-// dialog.matches('show_log_messages', [
-//     (session, args, next) => {
-//         var logLevel = builder.EntityRecognizer.findEntity(args.entities, 'log_level');
-//         if (logLevel) {
-//             return next({ response: logLevel.entity });
-//         } else {
-//             builder.Prompts.text(session, 'What log level?');
-//         }
-//     },
-//     (session, results) => {
-//         session.send('here i would show log messages');
-//     }
-// ]);
+dialog.matches('show_log_messages', [
+    (session, args, next) => {
+        var logLevel = builder.EntityRecognizer.findEntity(args.entities, 'log_level');
+        if (logLevel) {
+            return next({ response: logLevel.entity });
+        } else {
+            builder.Prompts.text(session, 'What log level?');
+        }
+    },
+    (session, results) => {
+        session.send('here i would show log messages');
+    }
+]);
 
 dialog.onDefault(builder.DialogAction.send("I don't understand."));
 
