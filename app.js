@@ -17,15 +17,36 @@ var connector = new builder.ChatConnector({
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 var bot = new builder.UniversalBot(connector);
+var model = 'https://api.projectoxford.ai/luis/v1/application?id=79bf0f42-0b72-4e09-94e8-28f1c07b2020&subscription-key=d7cd8e8da47c44f296806ff2c7a6873c&q=';
+var recognizer = new builder.LuisRecognizer(model);
+var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
+bot.dialog('/', dialog);
+
 server.post('/', connector.listen());
+
+// dialog.matches('show_log_messages', [
+//     (session, args, next) => {
+//         var logLevel = builder.EntityRecognizer.findEntity(args.entities, 'log_level');
+//         if (logLevel) {
+//             return next({ response: logLevel.entity });
+//         } else {
+//             builder.Prompts.text(session, 'What log level?');
+//         }
+//     },
+//     (session, results) => {
+//         session.send('here i would show log messages');
+//     }
+// ]);
+
+dialog.onDefault(builder.DialogAction.send("I don't understand."));
 
 //=========================================================
 // Bots Dialogs
 //=========================================================
 
-bot.dialog('/', function (session) {
-    session.send("Hello World");
-});
+// bot.dialog('/', function (session) {
+//     session.send("Hello World");
+// });
 
 // //=========================================================
 // // Bots Dialogs
