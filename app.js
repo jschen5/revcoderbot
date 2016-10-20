@@ -18,7 +18,9 @@ var connector = new builder.ChatConnector({
 });
 
 var bot = new builder.UniversalBot(connector);
-server.post('/api/messages', connector.listen());
+server.post('/api/messages', function (req, res) {
+	res.send(201, 'test');
+});
 
 //=========================================================
 // Bots Dialogs
