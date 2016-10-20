@@ -1,0 +1,240 @@
+{
+  "luis_schema_version": "1.3.0",
+  "name": "revcoder-bot",
+  "desc": "",
+  "culture": "en-us",
+  "intents": [
+    {
+      "name": "None"
+    },
+    {
+      "name": "show_log_messages"
+    }
+  ],
+  "entities": [
+    {
+      "name": "log_level"
+    }
+  ],
+  "composites": [],
+  "bing_entities": [],
+  "actions": [
+    {
+      "actionName": "show_log_messages",
+      "intentName": "show_log_messages",
+      "actionParameters": [
+        {
+          "parameterName": "log_level",
+          "entityName": "log_level",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "model_features": [
+    {
+      "name": "log_level",
+      "mode": true,
+      "words": "warning,error,info,information,debug",
+      "activated": true
+    }
+  ],
+  "regex_features": [],
+  "utterances": [
+    {
+      "text": "list warning",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "list warnings",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "show errors",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "display warnings",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "enumerate warnings",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "enumerate errors",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "hi",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "show warnings",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 1,
+          "endPos": 1
+        }
+      ]
+    },
+    {
+      "text": "show me errors",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "hello",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "good morning",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "what's up",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "how are you?",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "wednesday to friday",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "sdfasf",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "sdfasdf",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "hi again",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "show me warnings",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "answer!",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "what log level?",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "show me alex",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "log",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "messages",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "show me warning",
+      "intent": "show_log_messages",
+      "entities": [
+        {
+          "entity": "log_level",
+          "startPos": 2,
+          "endPos": 2
+        }
+      ]
+    },
+    {
+      "text": "esto no lo entiendes",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "sdfa",
+      "intent": "None",
+      "entities": []
+    },
+    {
+      "text": "hshsh",
+      "intent": "None",
+      "entities": []
+    }
+  ]
+}
