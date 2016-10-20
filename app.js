@@ -18,6 +18,8 @@ var connector = new builder.ChatConnector({
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 
+server.post('/', connector.listen());
+
 // var connector = new builder.ConsoleConnector({
 //     appId: process.env.MICROSOFT_APP_ID,
 //     appPassword: process.env.MICROSOFT_APP_PASSWORD
