@@ -17,7 +17,7 @@ var connector = new builder.ChatConnector({
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 var bot = new builder.UniversalBot(connector);
-var model = 'https://api.projectoxford.ai/luis/v1/application?id=61829164-298a-4135-a5e3-f6a101fe52de&subscription-key=611b6c1a-3d50-4d8b-be5b-9d7481198881&q=';
+var model = 'https://api.projectoxford.ai/luis/v1/application?id=61829164-298a-4135-a5e3-f6a101fe52de&subscription-key=e83cc08ceef042c3aaada69a17cc35e5&q=';
 var recognizer = new builder.LuisRecognizer(model);
 var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
 bot.dialog('/', dialog);
