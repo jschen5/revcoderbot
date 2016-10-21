@@ -51,6 +51,8 @@ var dialog = new builder.SimpleDialog(function (session, results) {
 		var e = obj.entities;
 		var intent = e.intent.value;
 
+		session.send(JSON.stringify(obj));
+
 		switch (intent) {
 			case 'logs':
 				var datetime = e.datetime && e.datetime.value;
