@@ -140,11 +140,14 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                     esSearch({ Timestamp: { gte: "now-24h" } }, `MessageTemplate: "Transcoding failed"`),
                 ])
                     .then(function (res) {
-                        session.send(`There are ${res[0].aggregations.distinct_instances.value} instances running`);
+                        var goodWords = ['awesome', 'great', 'amazing', 'pretty good', 'superb', 'fantastic'];
+                        var goodWord = goodWords[Math.floor(Math.random() * goodWords.length)];
+                        session.send(`I'm feeling ${goodWord}!`);
+                        session.send(`I have ${res[0].aggregations.distinct_instances.value} instances running`);
                         let warningsRecent = res[1].hits.total;
                         let warningsLastHour = res[2].hits.total;
-                        session.send(`There were ${warningsRecent} warnings last hour comparing with ${warningsLastHour} the hour before`);
-                        session.send(`There were ${res[3].hits.total} transcoding failures during the last 24 hours`);
+                        session.send(`I've had ${warningsRecent} warnings in the last hour compared to ${warningsLastHour} the hour before`);
+                        session.send(`I've had ${res[3].hits.total} transcoding failures in the last 24 hours`);
                     });
                 break;
             case `transcodingFailure`:
