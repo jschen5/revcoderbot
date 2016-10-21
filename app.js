@@ -51,6 +51,12 @@ function extractInterval(e) {
     return range
 }
 
+function getKibanaUrl(startDate, endDate, query) {
+    var mainUrl = "https://kibana-revcoder-prod.rev.com/_plugin/kibana/?#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0)," +
+        "time:(from:'FROM_DATE_PLACEHOLDER',mode:absolute,to:'TO_DATE_PLACEHOLDER'))" +
+        "&_a=(columns:!(_source),index:'cwl-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:QUERY_PLACEHOLDER)),sort:!(Timestamp,desc))";
+    return mailUrl.replace("FROM_DATE_PLACEHOLDER", fromDateStr).replace("TO_DATE_PLACEHOLDER", toDateStr).replace("QUERY_PLACEHOLDER", encodeURI(query));
+}
 
 //=========================================================
 // Bot Setup
@@ -60,9 +66,9 @@ function extractInterval(e) {
 /// Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
-   console.log('%s listening to %s', server.name, server.url); 
+   console.log('%s listening to %s', server.name, server.url);
 });
-  
+
 // Create chat bot
 var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
@@ -156,7 +162,7 @@ function esSearch(timestampRange, query, maxSize) {
                     }
                 }
             ],
-            size: maxSize || 10, 
+            size: maxSize || 10,
             "query": {
                 "filtered": {
                     "query": {
