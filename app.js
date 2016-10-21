@@ -3,7 +3,7 @@ var restify = require('restify');
 var builder = require('botbuilder');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
-googleUrl = require( 'google-url' );
+var googleUrl = require( 'google-url' );
 
 var elasticSearchClient = new elasticsearch.Client({
     host: 'http://ec2-35-160-221-20.us-west-2.compute.amazonaws.com',
@@ -68,6 +68,7 @@ function getKibanaUrl(interval, query) {
 //=========================================================
 
 
+///*
 // Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
@@ -79,14 +80,15 @@ var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
-
-///*
-// var server = {
-// };
-// server.post = function () { }
-// var connector = new builder.ConsoleConnector({
-// });
 //*/
+
+/*
+var server = {
+};
+server.post = function () { }
+var connector = new builder.ConsoleConnector({
+});
+*/
 var bot = new builder.UniversalBot(connector);
 
 function extractMessage(exception)
@@ -124,7 +126,6 @@ function shortenUrl(longUrl, callback) {
 
 var dialog = new builder.SimpleDialog(function (session, results) {
     witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
-        console.log(JSON.stringify(obj));
 
         var e = obj.entities;
         var intent = e.intent && e.intent[0].value;
@@ -136,12 +137,14 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                     esDistinctInstances(),
                     esSearch({ Timestamp: { gte: "now-1h" } }, "Level: Warning"),
                     esSearch({ Timestamp: { gte: "now-2h", lte: "now-1h" } }, "Level: Warning"),
+                    esSearch({ Timestamp: { gte: "now-24h" } }, `MessageTemplate: "Transcoding failed"`),
                 ])
                     .then(function (res) {
                         session.send(`There are ${res[0].aggregations.distinct_instances.value} instances running`);
                         let warningsRecent = res[1].hits.total;
                         let warningsLastHour = res[2].hits.total;
                         session.send(`There were ${warningsRecent} warnings last hour comparing with ${warningsLastHour} the hour before`);
+                        session.send(`There were ${res[3].hits.total} transcoding failures during the last 24 hours`);
                     });
                 break;
             case `transcodingFailure`:
