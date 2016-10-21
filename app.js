@@ -51,7 +51,19 @@ var dialog = new builder.SimpleDialog(function (session, results) {
 
         switch (intent) {
             case `transcodingFailure`:
-
+                session.send('Querying the server');
+                esTranscodingFailures("now-12h", "now")
+                    .then(function (resp) {
+                        session.send(`Total matches: ${resp.hits.total}`);
+                        if (resp.hits.total > 0) {
+                            const toShow = Math.min(5, resp.hits.total);
+                            session.send(`First ${toShow} matches:`);
+                            for (let el of resp.hits.hits.slice(0, toShow)) {
+                                session.send(el["_source"]["Properties"]["OriginalFileName"]);
+                                session.send(el["_source"]["Exception"]);
+                            }
+                        }
+                    });
                 break;
             case 'logs':
                 var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0].value : null;
