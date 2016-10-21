@@ -10,10 +10,10 @@ var elasticSearchClient = new elasticsearch.Client({
 });
 
 var witClient = restify.createJsonClient({
-	url: 'https://api.wit.ai',
-	headers: {
-		Authorization: 'Bearer 2CJZGLMHHFOUGQU5MRHZDT54MXA4CVEK'
-	}
+    url: 'https://api.wit.ai',
+    headers: {
+        Authorization: 'Bearer 2CJZGLMHHFOUGQU5MRHZDT54MXA4CVEK'
+    }
 });
 
 //=========================================================
@@ -32,17 +32,24 @@ var connector = new builder.ChatConnector({
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 
+/*
+var server = {
+};
+server.post = function () { }
+var connector = new builder.ConsoleConnector({
+});
+*/
 var bot = new builder.UniversalBot(connector);
 
 var dialog = new builder.SimpleDialog(function (session, results) {
-	witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
+    witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
         console.log(JSON.stringify(obj));
 
-		var e = obj.entities;
-		var intent = e.intent[0].value;
+        var e = obj.entities;
+        var intent = e.intent && e.intent[0].value;
 
-		switch (intent) {
-			case 'logs':
+        switch (intent) {
+            case 'logs':
                 var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0].value : null;
                 var datetimeTxt = datetime ? ` from ${datetime}` : '';
 
@@ -51,16 +58,20 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                 var logsTxt = logs ? `${logs} ` : '';
 
                 session.send(`Here are ${logsTxt}logs${datetimeTxt}.`);
-				break;
-			default:
-				session.send('I don\'t understand');
-		}
-	});
+                break;
+            default:
+                session.send(`I don't understand`);
+        }
+    });
 });
 
 bot.dialog('/', dialog);
 
 server.post('/', connector.listen());
+
+function esTranscodingFailures(startDate, endDate)
+{
+}
 
 function esSearch(startDate, endDate, query) {
     return elasticSearchClient.search({
