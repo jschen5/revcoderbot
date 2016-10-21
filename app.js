@@ -20,6 +20,7 @@ var witClient = restify.createJsonClient({
 // Bot Setup
 //=========================================================
 
+///*
 // Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
@@ -31,7 +32,7 @@ var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
-
+//*/
 /*
 var server = {
 };
@@ -49,6 +50,9 @@ var dialog = new builder.SimpleDialog(function (session, results) {
         var intent = e.intent && e.intent[0].value;
 
         switch (intent) {
+            case `transcodingFailure`:
+
+                break;
             case 'logs':
                 var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0].value : null;
                 var datetimeTxt = datetime ? ` from ${datetime}` : '';
@@ -60,6 +64,7 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                 session.send(`Here are ${logsTxt}logs${datetimeTxt}.`);
                 break;
             default:
+                esSearch("now-12h", "now", "*");
                 session.send(`I don't understand`);
         }
     });
@@ -71,9 +76,10 @@ server.post('/', connector.listen());
 
 function esTranscodingFailures(startDate, endDate)
 {
+    return esSearch(startDate, endDate, `MessageTemplate: "Transcoding failed"`);
 }
 
-function esSearch(startDate, endDate, query) {
+function esSearch(startDate, endDate, query, maxSize) {
     return elasticSearchClient.search({
         body: {
             "sort": [
@@ -84,6 +90,7 @@ function esSearch(startDate, endDate, query) {
                     }
                 }
             ],
+            size: maxSize || 10, 
             "query": {
                 "filtered": {
                     "query": {
