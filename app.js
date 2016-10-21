@@ -27,8 +27,7 @@ function isCloseToNow(timestamp) {
 }
 
 function extractInterval(e) {
-    var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0] : null;
-    // the correct key should be "date" ???? TODO
+    var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0] : {};
     var range = {"Timestamp": {}};
 
     if (datetime.type == "value") {
@@ -102,12 +101,8 @@ var dialog = new builder.SimpleDialog(function (session, results) {
 
         switch (intent) {
             case `transcodingFailure`:
-                session.send('Querying the server');
-
-                // key = date?
                 var interval = extractInterval(e);
-                session.send('interval ok');
-                session.send(JSON.stringify(interval));
+                session.send("Querying for transcoding failures in" + JSON.stringify(interval));
 
                 esTranscodingFailures(interval)
                     .then(function (resp) {
