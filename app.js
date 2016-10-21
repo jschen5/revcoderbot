@@ -21,7 +21,7 @@ var witClient = restify.createJsonClient({
 //=========================================================
 
 ///*
-// Setup Restify Server
+/// Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
    console.log('%s listening to %s', server.name, server.url); 
@@ -42,6 +42,20 @@ var connector = new builder.ConsoleConnector({
 */
 var bot = new builder.UniversalBot(connector);
 
+function extractMessage(exception)
+{
+    let firstLine = exception.split('\n').shift();
+
+    if (firstLine != null) {
+        let pos = firstLine.indexOf(":");
+        if (pos >= 0) {
+            return firstLine.substring(pos + 1).trim();
+        }
+    }
+    return firstLine;
+}
+
+
 var dialog = new builder.SimpleDialog(function (session, results) {
     witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
         console.log(JSON.stringify(obj));
@@ -60,7 +74,7 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                             session.send(`First ${toShow} matches:`);
                             for (let el of resp.hits.hits.slice(0, toShow)) {
                                 session.send(el["_source"]["Properties"]["OriginalFileName"]);
-                                session.send(el["_source"]["Exception"]);
+                                session.send(extractMessage(el["_source"]["Exception"]));
                             }
                         }
                     });
