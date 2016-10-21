@@ -28,6 +28,7 @@ function isCloseToNow(timestamp) {
 
 function extractInterval(e) {
     var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0] : {};
+    // the correct key should be "date" ???? TODO
     var range = {"Timestamp": {}};
 
     if (datetime.type == "value") {
@@ -66,7 +67,7 @@ function getKibanaUrl(interval, query) {
 //=========================================================
 
 ///*
-/// Setup Restify Server
+// Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
    console.log('%s listening to %s', server.name, server.url);
@@ -100,6 +101,16 @@ function extractMessage(exception)
     return firstLine;
 }
 
+function transformToDict(hits) {
+    var res = {};
+    for (let hit of hits) {
+        var key = hit["_source"].Properties.job.JobId;
+        if (key != null)
+            res[key] = hit;
+    }
+    return res;
+}
+
 
 var dialog = new builder.SimpleDialog(function (session, results) {
     witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
@@ -113,13 +124,18 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                 var interval = extractInterval(e);
                 session.send("Querying for transcoding failures in" + JSON.stringify(interval));
 
-                esTranscodingFailures(interval)
-                    .then(function (resp) {
+                Promise.all([esTranscodingFailures(interval), esTaskFailed(interval)])
+                    .then(function (res) {
+                        let resp = res[0];
+                        let taskFailed = transformToDict(res[1].hits.hits);
                         session.send(`Total matches: ${resp.hits.total}`);
                         if (resp.hits.total > 0) {
                             const toShow = Math.min(5, resp.hits.total);
                             session.send(`First ${toShow} matches:`);
                             for (let el of resp.hits.hits.slice(0, toShow)) {
+                                var log = taskFailed[el["_source"].Properties.JobId];
+                                if (log != null)
+                                    session.send(`See transcoding log: ${log["_source"].Properties.job.JobLogS3Url}`);
                                 session.send(el["_source"]["Properties"]["OriginalFileName"]);
                                 session.send(extractMessage(el["_source"]["Exception"]));
                             }
@@ -151,12 +167,13 @@ function esTranscodingFailures(timestampRange)
 {
     return esSearch(timestampRange, `MessageTemplate: "Transcoding failed"`);
 }
+function esTaskFailed(timestampRange) {
+    return esSearch(timestampRange, `MessageTemplate: "Task failed {@job}"`, 100);
+}
 
 function esSearch(timestampRange, query, maxSize) {
     return elasticSearchClient.search({
         body: {
-            //from: 0,
-            "size": 5,
             "sort": [
                 {
                     "Timestamp": {
@@ -178,10 +195,10 @@ function esSearch(timestampRange, query, maxSize) {
                         "bool": {
                             "must": [
                                 {
-                                    "range": {
+                                    "range": 
                                         timestampRange
+                                    
                                     }
-                                }
                             ],
                             "must_not": []
                         }
@@ -191,7 +208,6 @@ function esSearch(timestampRange, query, maxSize) {
         }
     });
 }
-
 
 // dialog.matches('show_log_messages', [
 //     (session, args, next) => {
