@@ -34,7 +34,7 @@ var connector = new builder.ConsoleConnector({
 */
 
 var bot = new builder.UniversalBot(connector);
-var model = 'https://api.projectoxford.ai/luis/v1/application?id=83e81501-285f-43e5-a2d6-0462060971d5&subscription-key=e967ef71b1d34f599ec1b016c6563847&q=';
+var model = 'https://api.projectoxford.ai/luis/v1/application?id=034463e4-2fde-4bac-ad12-f685ffb8fd62&subscription-key=e967ef71b1d34f599ec1b016c6563847';
 var recognizer = new builder.LuisRecognizer(model);
 var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
 bot.dialog('/', dialog);
