@@ -66,7 +66,7 @@ function getKibanaUrl(interval, query) {
 // Bot Setup
 //=========================================================
 
-///*
+/*
 // Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
@@ -78,14 +78,14 @@ var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
-//*/
-/*
+*/
+///*
 var server = {
 };
 server.post = function () { }
 var connector = new builder.ConsoleConnector({
 });
-*/
+//*/
 var bot = new builder.UniversalBot(connector);
 
 function extractMessage(exception)
@@ -120,6 +120,13 @@ var dialog = new builder.SimpleDialog(function (session, results) {
         var intent = e.intent && e.intent[0].value;
 
         switch (intent) {
+            case `revcoderStatus`:
+                session.send("Let me check");
+                Promise.all([esDistinctInstances()])
+                    .then(function (res) {
+                        session.send(`There are ${res[0].aggregations.distinct_instances.value} instances running`);
+                    });
+                break;
             case `transcodingFailure`:
                 var interval = extractInterval(e);
                 session.send("Querying for transcoding failures in" + JSON.stringify(interval));
@@ -133,11 +140,11 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                             const toShow = Math.min(5, resp.hits.total);
                             session.send(`First ${toShow} matches:`);
                             for (let el of resp.hits.hits.slice(0, toShow)) {
+                                session.send(el["_source"]["Properties"]["OriginalFileName"]);
+                                session.send(extractMessage(el["_source"]["Exception"]));
                                 var log = taskFailed[el["_source"].Properties.JobId];
                                 if (log != null)
                                     session.send(`See transcoding log: ${log["_source"].Properties.job.JobLogS3Url}`);
-                                session.send(el["_source"]["Properties"]["OriginalFileName"]);
-                                session.send(extractMessage(el["_source"]["Exception"]));
                             }
                         }
                     });
@@ -153,7 +160,6 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                 session.send(`Here are ${logsTxt}logs${datetimeTxt}.`);
                 break;
             default:
-                esSearch("now-12h", "now", "*");
                 session.send(`I don't understand`);
         }
     });
@@ -163,8 +169,33 @@ bot.dialog('/', dialog);
 
 server.post('/', connector.listen());
 
-function esTranscodingFailures(timestampRange)
-{
+function esDistinctInstances() {
+    return elasticSearchClient.search({
+        body: {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "range": {
+                                Timestamp: { gte: "now-10m" }
+                            }
+                        }
+                    ],
+                    "must_not": []
+                }
+            },
+            "aggs": {
+                "distinct_instances": {
+                    "cardinality": {
+                        "field": "Properties.instanceId",
+                    }
+                }
+            }
+        }
+    });
+}
+
+function esTranscodingFailures(timestampRange) {
     return esSearch(timestampRange, `MessageTemplate: "Transcoding failed"`);
 }
 function esTaskFailed(timestampRange) {
