@@ -132,7 +132,7 @@ var dialog = new builder.SimpleDialog(function (session, results) {
 
         switch (intent) {
             case `revcoderStatus`:
-                session.send("Let me check");
+                session.send("Let me think for a sec...");
                 Promise.all([
                     esDistinctInstances(),
                     esSearch({ Timestamp: { gte: "now-1h" } }, "Level: Warning"),
@@ -152,10 +152,11 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                 break;
             case `transcodingFailure`:
                 var interval = extractInterval(e);
-                session.send("Querying for transcoding failures in" + JSON.stringify(interval));
+                session.send("Let me query for transcoding failures in" + JSON.stringify(interval));
 
                 Promise.all([esTranscodingFailures(interval), esTaskFailed(interval)])
                     .then(function (res) {
+                        session.send('Done! Here you go!')
                         let resp = res[0];
                         let taskFailed = transformToDict(res[1].hits.hits);
                         session.send(`Total matches: ${resp.hits.total}`);
