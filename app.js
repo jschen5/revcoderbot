@@ -51,11 +51,14 @@ function extractInterval(e) {
     return range
 }
 
-function getKibanaUrl(startDate, endDate, query) {
+function getKibanaUrl(interval, query) {
+    var from = interval.Timestamp.from ? interval.Timestamp.from : "now-12h";
+    var to =  interval.Timestamp.to ? interval.Timestamp.to : "now";
     var mainUrl = "https://kibana-revcoder-prod.rev.com/_plugin/kibana/?#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0)," +
         "time:(from:'FROM_DATE_PLACEHOLDER',mode:absolute,to:'TO_DATE_PLACEHOLDER'))" +
         "&_a=(columns:!(_source),index:'cwl-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:QUERY_PLACEHOLDER)),sort:!(Timestamp,desc))";
-    return mailUrl.replace("FROM_DATE_PLACEHOLDER", fromDateStr).replace("TO_DATE_PLACEHOLDER", toDateStr).replace("QUERY_PLACEHOLDER", encodeURI(query));
+    return mailUrl.replace("FROM_DATE_PLACEHOLDER", from)
+        .replace("TO_DATE_PLACEHOLDER", to).replace("QUERY_PLACEHOLDER", encodeURI(query));
 }
 
 //=========================================================
