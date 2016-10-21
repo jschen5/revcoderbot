@@ -2,17 +2,9 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 var elasticsearch = require('elasticsearch');
-
-var elasticSearchClient = new elasticsearch.Client({
+var client = new elasticsearch.Client({
     host: 'http://ec2-35-160-221-20.us-west-2.compute.amazonaws.com',
     log: 'trace'
-});
-
-var witClient = restify.createJsonClient({
-	url: 'https://api.wit.ai',
-	headers: {
-		Authorization: 'Bearer 2CJZGLMHHFOUGQU5MRHZDT54MXA4CVEK'
-	}
 });
 
 //=========================================================
@@ -42,33 +34,15 @@ var connector = new builder.ConsoleConnector({
 */
 
 var bot = new builder.UniversalBot(connector);
-// var model = 'https://api.projectoxford.ai/luis/v1/application?id=034463e4-2fde-4bac-ad12-f685ffb8fd62&subscription-key=e967ef71b1d34f599ec1b016c6563847';
-// var recognizer = new builder.LuisRecognizer(model);
-// var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
-
-var dialog = new builder.SimpleDialog(function (session, results) {
-	witClient.get('/message?v=20161021', function (err, req, res, obj) {
-		var e = obj.entities;
-		var intent = e.intent.value;
-
-		switch (intent) {
-			case 'logs':
-				var datetime = e.datetime && e.datetime.value;
-				var logs = e.logs && e.logs.value;
-				session.send(`Here are ${`${logs} ` || ''}logs${datetime ? ` from ${datetime}` : ''}.`);
-				break;
-			default:
-				session.send('I don\'t understand');
-		}
-	});
-});
-
+var model = 'https://api.projectoxford.ai/luis/v1/application?id=034463e4-2fde-4bac-ad12-f685ffb8fd62&subscription-key=e967ef71b1d34f599ec1b016c6563847';
+var recognizer = new builder.LuisRecognizer(model);
+var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
 bot.dialog('/', dialog);
 
 server.post('/', connector.listen());
 
 function esSearch(startDate, endDate, query) {
-    return elasticSearchClient.search({
+    return client.search({
         body: {
             "sort": [
                 {
@@ -108,29 +82,29 @@ function esSearch(startDate, endDate, query) {
 }
 
 
-// dialog.matches('show_log_messages', [
-//     (session, args, next) => {
-//         var logLevel = builder.EntityRecognizer.findEntity(args.entities, 'log_level');
-//         if (logLevel) {
-//             return next({ response: logLevel.entity });
-//         } else {
-//             builder.Prompts.text(session, 'What log level?');
-//         }
-//     },
-//     (session, results) => {
-//         let request = esSearch("now-12h", "now", "Level: Warning");
-//         request.then(function (resp) {
-//             session.send(`Total matches: ${resp.hits.total}`);
-//             if (resp.hits.total > 0) {
-//                 const toShow = Math.min(5, resp.hits.total);
-//                 session.send(`First ${toShow} matches:`);
-//                 for (let el of resp.hits.hits.slice(0, toShow)) {
-//                     session.send(el["_source"]["RenderedMessage"]);
-//                 }
-//             }
-//         })
-//         session.send(`querying requested data...`);
-//     }
-// ]);
+dialog.matches('show_log_messages', [
+    (session, args, next) => {
+        var logLevel = builder.EntityRecognizer.findEntity(args.entities, 'log_level');
+        if (logLevel) {
+            return next({ response: logLevel.entity });
+        } else {
+            builder.Prompts.text(session, 'What log level?');
+        }
+    },
+    (session, results) => {
+        let request = esSearch("now-12h", "now", "Level: Warning");
+        request.then(function (resp) {
+            session.send(`Total matches: ${resp.hits.total}`);
+            if (resp.hits.total > 0) {
+                const toShow = Math.min(5, resp.hits.total);
+                session.send(`First ${toShow} matches:`);
+                for (let el of resp.hits.hits.slice(0, toShow)) {
+                    session.send(el["_source"]["RenderedMessage"]);
+                }
+            }
+        })
+        session.send(`querying requested data...`);
+    }
+]);
 
-// dialog.onDefault(builder.DialogAction.send("I don't understand."));
+dialog.onDefault(builder.DialogAction.send("I don't understand."));
