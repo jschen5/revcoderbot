@@ -10,10 +10,10 @@ var elasticSearchClient = new elasticsearch.Client({
 });
 
 var witClient = restify.createJsonClient({
-	url: 'https://api.wit.ai',
-	headers: {
-		Authorization: 'Bearer 2CJZGLMHHFOUGQU5MRHZDT54MXA4CVEK'
-	}
+    url: 'https://api.wit.ai',
+    headers: {
+        Authorization: 'Bearer 2CJZGLMHHFOUGQU5MRHZDT54MXA4CVEK'
+    }
 });
 
 // convert a time grain to a date math thingy
@@ -22,8 +22,8 @@ function dateMathify(grain) {
 }
 
 function extractInterval(e) {
-    var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime : null;
-    var range = {"Timestamp": {}}
+    var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0] : null;
+    var range = {"Timestamp": {}};
 
     if (datetime.type == "value") {
         // case for date and length
@@ -39,8 +39,7 @@ function extractInterval(e) {
             range.Timestamp.lte = datetime.to.value;
         }
     } else {
-        // debugging
-        console.log("anomalous date format")
+        // DEBUG
     }
 
     // Return a timestamp range for elastic search
@@ -52,6 +51,7 @@ function extractInterval(e) {
 // Bot Setup
 //=========================================================
 
+///*
 // Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
@@ -63,7 +63,14 @@ var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
-
+//*/
+/*
+var server = {
+};
+server.post = function () { }
+var connector = new builder.ConsoleConnector({
+});
+*/
 var bot = new builder.UniversalBot(connector);
 
 var dialog = new builder.SimpleDialog(function (session, results) {
@@ -71,36 +78,44 @@ var dialog = new builder.SimpleDialog(function (session, results) {
         console.log(JSON.stringify(obj));
 
         var e = obj.entities;
-        var intent = e.intent[0].value;
+        var intent = e.intent && e.intent[0].value;
 
         switch (intent) {
-            case 'transcodingFailure':
-                //obj._text  
-                break;
-            case 'transcodingFailure':
+            case `transcodingFailure`:
+                session.send('Querying the server');
+
+                // key = date?
                 var interval = extractInterval(e);
-                session.send('transcoding failure');
-                // TODO
-                session.send(esSearch(interval, "Level: Warning"));
+                session.send('interval ok');
+                session.send(JSON.stringify(interval));
+
+                esTranscodingFailures(interval)
+                    .then(function (resp) {
+                        session.send(`Total matches: ${resp.hits.total}`);
+                        if (resp.hits.total > 0) {
+                            const toShow = Math.min(5, resp.hits.total);
+                            session.send(`First ${toShow} matches:`);
+                            for (let el of resp.hits.hits.slice(0, toShow)) {
+                                session.send(el["_source"]["Properties"]["OriginalFileName"]);
+                                session.send(el["_source"]["Exception"]);
+                            }
+                        }
+                    });
                 break;
             case 'logs':
-                var interval = extractInterval(e);
-                var datetimeTxt = datetime ? `from ${interval.startTime} to ${interval.endTime}` : '';
+                var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0].value : null;
+                var datetimeTxt = datetime ? ` from ${datetime}` : '';
+
                 var numLogs = e.logs || e.number;
                 var logs = (numLogs && numLogs.length > 0) ? numLogs[0].value : null;
-                var logsTxt = logs ? `${logs}` : '';
+                var logsTxt = logs ? `${logs} ` : '';
 
-                session.send(`Here are ${logsTxt} logs ${datetimeTxt}. (Search results limited to 5)`);
-                // TODO
-                session.send(esSearch(startTime, endTime, "Level: Warning"));
-
+                session.send(`Here are ${logsTxt}logs${datetimeTxt}.`);
                 break;
             default:
-                session.send('I don\'t understand');
+                esSearch("now-12h", "now", "*");
+                session.send(`I don't understand`);
         }
-
-        session.send(JSON.stringify(e));
-
     });
 });
 
@@ -108,7 +123,12 @@ bot.dialog('/', dialog);
 
 server.post('/', connector.listen());
 
-function esSearch(timestampRange, query) {
+function esTranscodingFailures(timestampRange)
+{
+    return esSearch(startDate, endDate, `MessageTemplate: "Transcoding failed"`);
+}
+
+function esSearch(timestampRange, query, maxSize) {
     return elasticSearchClient.search({
         body: {
             //from: 0,
@@ -121,6 +141,7 @@ function esSearch(timestampRange, query) {
                     }
                 }
             ],
+            size: maxSize || 10, 
             "query": {
                 "filtered": {
                     "query": {
