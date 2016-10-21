@@ -3,6 +3,7 @@ var restify = require('restify');
 var builder = require('botbuilder');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
+googleUrl = require( 'google-url' );
 
 var elasticSearchClient = new elasticsearch.Client({
     host: 'http://ec2-35-160-221-20.us-west-2.compute.amazonaws.com',
@@ -112,6 +113,15 @@ function transformToDict(hits) {
 }
 
 
+function shortenUrl(longUrl, callback) {
+    var authObject = {"key" : "AIzaSyCugIHU_VtYOKJvbvtXHnmjpCypm8z0K6k"};
+    var shortener = new googleUrl(authObject);
+
+    shortener.shorten( 'http://www.rev.com/caption', function( err, shortUrl ) {
+        callback(shortUrl);
+    } );
+}
+
 var dialog = new builder.SimpleDialog(function (session, results) {
     witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
         console.log(JSON.stringify(obj));
@@ -195,9 +205,9 @@ function esSearch(timestampRange, query, maxSize) {
                         "bool": {
                             "must": [
                                 {
-                                    "range": 
+                                    "range":
                                         timestampRange
-                                    
+
                                     }
                             ],
                             "must_not": []
