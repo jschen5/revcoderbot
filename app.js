@@ -132,7 +132,7 @@ var dialog = new builder.SimpleDialog(function (session, results) {
 
         switch (intent) {
             case `revcoderStatus`:
-                session.send("Let me check");
+                session.send("Let me think for a sec...");
                 Promise.all([
                     esDistinctInstances(),
                     esSearch({ Timestamp: { gte: "now-1h" } }, "Level: Warning"),
@@ -140,26 +140,29 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                     esSearch({ Timestamp: { gte: "now-24h" } }, `MessageTemplate: "Transcoding failed"`),
                 ])
                     .then(function (res) {
-                        session.send(`There are ${res[0].aggregations.distinct_instances.value} instances running`);
+                        var goodWords = ['awesome', 'great', 'amazing', 'pretty good', 'superb', 'fantastic'];
+                        var goodWord = goodWords[Math.floor(Math.random() * goodWords.length)];
+                        session.send(`I'm feeling ${goodWord}!`);
+                        session.send(`I have ${res[0].aggregations.distinct_instances.value} instances running`);
                         let warningsRecent = res[1].hits.total;
                         let warningsLastHour = res[2].hits.total;
-                        session.send(`There were ${warningsRecent} warnings last hour comparing with ${warningsLastHour} the hour before`);
-                        session.send(`There were ${res[3].hits.total} transcoding failures during the last 24 hours`);
+                        session.send(`I've had ${warningsRecent} warnings in the last hour compared to ${warningsLastHour} the hour before`);
+                        session.send(`I've had ${res[3].hits.total} transcoding failures in the last 24 hours`);
                     });
                 break;
             case `transcodingFailure`:
                 var interval = extractInterval(e);
-                var start = interval.Timestamp.gte ?
-                    dateFormat(interval.Timestamp.gte, "dddd, mmmm dS, yyyy, h:MM:ss TT") :
-                    "the beginning of time";
-                var end = interval.Timestamp.lte ?
-                    dateFormat(interval.Timestamp.lte, "dddd, mmmm dS, yyyy, h:MM:ss TT") :
-                    "now";
-                session.send("Querying for transcoding failures from " + start + " to " + end + ".");
-                session.send("Querying for transcoding failures in" + JSON.stringify(interval));
+                //var start = interval.Timestamp.gte ?
+                //    dateFormat(interval.Timestamp.gte, "dddd, mmmm dS, yyyy, h:MM:ss TT") :
+                //    "the beginning of time";
+                //var end = interval.Timestamp.lte ?
+                //    dateFormat(interval.Timestamp.lte, "dddd, mmmm dS, yyyy, h:MM:ss TT") :
+                //    "now";
+                session.send("Let me query for transcoding failures.");// from " + start + " to " + end + ".");
 
                 Promise.all([esTranscodingFailures(interval), esTaskFailed(interval)])
                     .then(function (res) {
+                        session.send('Done! Here you go!')
                         let resp = res[0];
                         let taskFailed = transformToDict(res[1].hits.hits);
                         session.send(`Total matches: ${resp.hits.total}`);
