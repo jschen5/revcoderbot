@@ -119,7 +119,7 @@ function shortenUrl(longUrl, callback) {
     var authObject = {"key" : "AIzaSyCugIHU_VtYOKJvbvtXHnmjpCypm8z0K6k"};
     var shortener = new googleUrl(authObject);
 
-    shortener.shorten( 'http://www.rev.com/caption', function( err, shortUrl ) {
+    shortener.shorten( 'https://www2-foxtranslate.s3.amazonaws.com/revcoder/logs/2016-10-21/a9722087-2b02-4fb8-a20a-75eab9167a16/da9450a8-ce8d-475c-9230-d972f9c11bfb.log?AWSAccessKeyId=ASIAIWOEIP25X3IJ4SRQ&Expires=1477604994&x-amz-security-token=FQoDYXdzEGcaDE4EQgskfEX63OIkeiKcA9%2BNBJXfwIBo5Cjuoo6SqBT3EWD0yEPfX%2F9iHM7uqXPHzczOxdgEyVRcOtwsMPKOrc0yAkISldeNbc0Ad%2BHWP4K37DasF4ksTy3tttvO5xoDxIUTZl1kdHCbD%2BWNqCKqkGYunuY6hXDNjYZPsOW3b9EBvPrfkwyI4rkmtdbIyo3xaMBGAx2QPqg%2BH7Bfgt2M%2F%2F%2Bw7bebOiDGIoR8nH%2FiYGau5gcTWVS9EPRV3x8rJxB03n9muIdBaS1uSk0DAF%2F88KVbkVdZH3%2F%2FH90%2FZe%2BXs6M9%2FivvJ4rPHu1Z5a1%2BurN2k5HsHGtOGEtiNfBt6IWwSWoUq3xDKArQCNH4yvr4%2FE8IvCaAHgLnY3njP0WTPy5Uw4ytve8Icd5pVWZAmww5%2FZ3lsvXzK8hZrYQLEuB85o4seIAa%2FKDjReIyv0tXcpYnGngXLqEx9cgko8WnJPJ08BcQTbw9ZOTsgHvlNO7EY8I50kUXN%2FOjxa41U0%2B8RBIsR2e5r950WK6fMMLz%2BIGdVu%2BrRYbH2KcICEjt8aQxtYMqX7DD3qCh2BCGNRcoi5CqwAU%3D&Signature=K8i9N6EBPDkz0adMnYDVm3bJVlk%3D', function( err, shortUrl ) {
         callback(shortUrl);
     } );
 }
