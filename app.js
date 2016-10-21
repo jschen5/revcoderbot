@@ -16,6 +16,38 @@ var witClient = restify.createJsonClient({
 	}
 });
 
+// convert a time grain to a date math thingy
+function dateMathify(grain) {
+    return grain[0];
+}
+
+function extractInterval(e) {
+    var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime : null;
+    var range = {"Timestamp": {}}
+
+    if (datetime.type == "value") {
+        // case for date and length
+        range.Timestamp.gte = datetime.value;
+        // double pipe allows date math expressions
+        range.Timestamp.lte = datetime.value + "||+1" + dateMathify(datetime.grain);
+    } else if (datetime.type == "interval") {
+        // case for date interval
+        if (datetime.from.value) {
+            range.Timestamp.gte = datetime.from.value;
+        }
+        if (datetime.to.value) {
+            range.Timestamp.lte = datetime.to.value;
+        }
+    } else {
+        // debugging
+        console.log("anomalous date format")
+    }
+
+    // Return a timestamp range for elastic search
+    return range
+}
+
+
 //=========================================================
 // Bot Setup
 //=========================================================
@@ -35,36 +67,52 @@ var connector = new builder.ChatConnector({
 var bot = new builder.UniversalBot(connector);
 
 var dialog = new builder.SimpleDialog(function (session, results) {
-	witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
+    witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
         console.log(JSON.stringify(obj));
 
-		var e = obj.entities;
-		var intent = e.intent[0].value;
+        var e = obj.entities;
+        var intent = e.intent[0].value;
 
-		switch (intent) {
-			case 'logs':
-                var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0].value : null;
-                var datetimeTxt = datetime ? ` from ${datetime}` : '';
-
+        switch (intent) {
+            case 'transcodingFailure':
+                //obj._text  
+                break;
+            case 'transcodingFailure':
+                var interval = extractInterval(e);
+                session.send('transcoding failure');
+                // TODO
+                session.send(esSearch(interval, "Level: Warning"));
+                break;
+            case 'logs':
+                var interval = extractInterval(e);
+                var datetimeTxt = datetime ? `from ${interval.startTime} to ${interval.endTime}` : '';
                 var numLogs = e.logs || e.number;
                 var logs = (numLogs && numLogs.length > 0) ? numLogs[0].value : null;
-                var logsTxt = logs ? `${logs} ` : '';
+                var logsTxt = logs ? `${logs}` : '';
 
-                session.send(`Here are ${logsTxt}logs${datetimeTxt}.`);
-				break;
-			default:
-				session.send('I don\'t understand');
-		}
-	});
+                session.send(`Here are ${logsTxt} logs ${datetimeTxt}. (Search results limited to 5)`);
+                // TODO
+                session.send(esSearch(startTime, endTime, "Level: Warning"));
+
+                break;
+            default:
+                session.send('I don\'t understand');
+        }
+
+        session.send(JSON.stringify(e));
+
+    });
 });
 
 bot.dialog('/', dialog);
 
 server.post('/', connector.listen());
 
-function esSearch(startDate, endDate, query) {
+function esSearch(timestampRange, query) {
     return elasticSearchClient.search({
         body: {
+            //from: 0,
+            "size": 5,
             "sort": [
                 {
                     "Timestamp": {
@@ -86,10 +134,7 @@ function esSearch(startDate, endDate, query) {
                             "must": [
                                 {
                                     "range": {
-                                        "Timestamp": {
-                                            "gte": startDate,
-                                            "lte": endDate
-                                        }
+                                        timestampRange
                                     }
                                 }
                             ],
