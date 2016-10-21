@@ -195,7 +195,7 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                 session.send(`Here are ${logsTxt}logs${datetimeTxt}.`);
                 break;
             default:
-                session.send(`I don't understand`);
+                session.send(`Walll-eeee (I don't understand)`);
         }
     });
 });
