@@ -19,6 +19,7 @@
   "dependencies": {
     "botbuilder": "^3.3.3",
     "elasticsearch": "^11.0.1",
+    "moment": "^2.15.1",
     "restify": "^4.1.1"
   }
 }

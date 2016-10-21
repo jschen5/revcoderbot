@@ -2,6 +2,7 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 var elasticsearch = require('elasticsearch');
+var moment = require('moment');
 
 var elasticSearchClient = new elasticsearch.Client({
     host: 'http://ec2-35-160-221-20.us-west-2.compute.amazonaws.com',
@@ -31,39 +32,30 @@ var connector = new builder.ChatConnector({
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 
-/*
-var server = {
-};
-server.post = function () { }
-var connector = new builder.ConsoleConnector({
-    //    appId: 'c413b2ef-382c-45bd-8ff0-f76d60e2a821',
-    //    appSecret: 'd7cd8e8da47c44f296806ff2c7a6873c'
-});
-*/
-
 var bot = new builder.UniversalBot(connector);
-// var model = 'https://api.projectoxford.ai/luis/v1/application?id=034463e4-2fde-4bac-ad12-f685ffb8fd62&subscription-key=e967ef71b1d34f599ec1b016c6563847';
-// var recognizer = new builder.LuisRecognizer(model);
-// var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
 
 var dialog = new builder.SimpleDialog(function (session, results) {
-	witClient.get('/message?v=20161021', function (err, req, res, obj) {
-		var e = obj.entities;
-		var intent = e.intent.value;
+	witClient.get(`/message?v=20161021&q=${encodeURIComponent(session.message.text)}`, function (err, req, res, obj) {
+        console.log(JSON.stringify(obj));
 
-		session.send(JSON.stringify(obj));
+		var e = obj.entities;
+		var intent = e.intent[0].value;
 
 		switch (intent) {
 			case 'logs':
-				var datetime = e.datetime && e.datetime.value;
-				var logs = e.logs && e.logs.value;
-				session.send(`Here are ${`${logs} ` || ''}logs${datetime ? ` from ${datetime}` : ''}.`);
+                var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0].value : null;
+                var datetimeTxt = datetime ? ` from ${datetime}` : '';
+
+                var numLogs = e.logs || e.number;
+                var logs = (numLogs && numLogs.length > 0) ? numLogs[0].value : null;
+                var logsTxt = logs ? `${logs} ` : '';
+
+                session.send(`Here are ${logsTxt}logs${datetimeTxt}.`);
 				break;
 			default:
 				session.send('I don\'t understand');
 		}
 	});
-	session.send(`querying requested data...`);
 });
 
 bot.dialog('/', dialog);
