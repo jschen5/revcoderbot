@@ -61,6 +61,7 @@ var dialog = new builder.SimpleDialog(function (session, results) {
 				session.send('I don\'t understand');
 		}
 	});
+	session.send(`querying requested data...`);
 });
 
 bot.dialog('/', dialog);
