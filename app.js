@@ -122,9 +122,16 @@ var dialog = new builder.SimpleDialog(function (session, results) {
         switch (intent) {
             case `revcoderStatus`:
                 session.send("Let me check");
-                Promise.all([esDistinctInstances()])
+                Promise.all([
+                    esDistinctInstances(),
+                    esSearch({ Timestamp: { gte: "now-1h" } }, "Level: Warning"),
+                    esSearch({ Timestamp: { gte: "now-2h", lte: "now-1h" } }, "Level: Warning"),
+                ])
                     .then(function (res) {
                         session.send(`There are ${res[0].aggregations.distinct_instances.value} instances running`);
+                        let warningsRecent = res[1].hits.total;
+                        let warningsLastHour = res[2].hits.total;
+                        session.send(`There were ${warningsRecent} warnings last hour comparing with ${warningsLastHour} the hour before`);
                     });
                 break;
             case `transcodingFailure`:
@@ -186,6 +193,31 @@ function esDistinctInstances() {
             },
             "aggs": {
                 "distinct_instances": {
+                    "cardinality": {
+                        "field": "Properties.instanceId",
+                    }
+                }
+            }
+        }
+    });
+}
+function esDistinctWarnings() {
+    return elasticSearchClient.search({
+        body: {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "range": {
+                                Timestamp: { gte: "now-1h" }
+                            }
+                        }
+                    ],
+                    "must_not": []
+                }
+            },
+            "aggs": {
+                "distinct_warning": {
                     "cardinality": {
                         "field": "Properties.instanceId",
                     }
