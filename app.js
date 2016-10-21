@@ -21,8 +21,14 @@ function dateMathify(grain) {
     return grain[0];
 }
 
+function isCloseToNow(timestamp) {
+    var tolerance = 5 * 60 * 1000; // 5 minutes (ms)
+    return (Math.abs((new Date()) - Date.parse(timestamp)) < tolerance);
+}
+
 function extractInterval(e) {
     var datetime = (e.datetime && e.datetime.length > 0) ? e.datetime[0] : null;
+    // the correct key should be "date" ???? TODO
     var range = {"Timestamp": {}};
 
     if (datetime.type == "value") {
@@ -36,13 +42,13 @@ function extractInterval(e) {
             range.Timestamp.gte = datetime.from.value;
         }
         if (datetime.to.value) {
-            range.Timestamp.lte = datetime.to.value;
+            range.Timestamp.lte = isCloseToNow(datetime.to.value) ?
+                "now" : datetime.to.value;
         }
     } else {
-        // DEBUG
+        range = {"Timestamp": {"gte": "now-12h"}};
     }
 
-    // Return a timestamp range for elastic search
     return range
 }
 
@@ -139,7 +145,7 @@ server.post('/', connector.listen());
 
 function esTranscodingFailures(timestampRange)
 {
-    return esSearch(startDate, endDate, `MessageTemplate: "Transcoding failed"`);
+    return esSearch(timestampRange, `MessageTemplate: "Transcoding failed"`);
 }
 
 function esSearch(timestampRange, query, maxSize) {
