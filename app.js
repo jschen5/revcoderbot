@@ -3,7 +3,8 @@ var restify = require('restify');
 var builder = require('botbuilder');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
-var googleUrl = require( 'google-url' );
+var dateformat = require('dateformat');
+var googleUrl = require('google-url');
 
 var elasticSearchClient = new elasticsearch.Client({
     host: 'http://ec2-35-160-221-20.us-west-2.compute.amazonaws.com',
@@ -114,7 +115,6 @@ function transformToDict(hits) {
     return res;
 }
 
-
 function shortenUrl(longUrl, callback) {
     var authObject = {"key" : "AIzaSyCugIHU_VtYOKJvbvtXHnmjpCypm8z0K6k"};
     var shortener = new googleUrl(authObject);
@@ -149,6 +149,13 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                 break;
             case `transcodingFailure`:
                 var interval = extractInterval(e);
+                var start = interval.Timestamp.gte ?
+                    dateFormat(interval.Timestamp.gte, "dddd, mmmm dS, yyyy, h:MM:ss TT") :
+                    "the beginning of time";
+                var end = interval.Timestamp.lte ?
+                    dateFormat(interval.Timestamp.lte, "dddd, mmmm dS, yyyy, h:MM:ss TT") :
+                    "now";
+                session.send("Querying for transcoding failures from " + start + " to " + end + ".");
                 session.send("Querying for transcoding failures in" + JSON.stringify(interval));
 
                 Promise.all([esTranscodingFailures(interval), esTaskFailed(interval)])
@@ -159,12 +166,17 @@ var dialog = new builder.SimpleDialog(function (session, results) {
                         if (resp.hits.total > 0) {
                             const toShow = Math.min(5, resp.hits.total);
                             session.send(`First ${toShow} matches:`);
+                            var log;
                             for (let el of resp.hits.hits.slice(0, toShow)) {
                                 session.send(el["_source"]["Properties"]["OriginalFileName"]);
                                 session.send(extractMessage(el["_source"]["Exception"]));
-                                var log = taskFailed[el["_source"].Properties.JobId];
-                                if (log != null)
-                                    session.send(`See transcoding log: ${log["_source"].Properties.job.JobLogS3Url}`);
+                                log = taskFailed[el["_source"].Properties.JobId];
+                            }
+                            if (log != null) {
+                                shortenUrl(log["_source"].Properties.job.JobLogS3Url, function (url) {
+                                    session.send(`See transcoding log: ${url}`);
+                                });
+                                //session.send(`See transcoding log: ${log["_source"].Properties.job.JobLogS3Url}`);
                             }
                         }
                     });
@@ -284,30 +296,3 @@ function esSearch(timestampRange, query, maxSize) {
         }
     });
 }
-
-// dialog.matches('show_log_messages', [
-//     (session, args, next) => {
-//         var logLevel = builder.EntityRecognizer.findEntity(args.entities, 'log_level');
-//         if (logLevel) {
-//             return next({ response: logLevel.entity });
-//         } else {
-//             builder.Prompts.text(session, 'What log level?');
-//         }
-//     },
-//     (session, results) => {
-//         let request = esSearch("now-12h", "now", "Level: Warning");
-//         request.then(function (resp) {
-//             session.send(`Total matches: ${resp.hits.total}`);
-//             if (resp.hits.total > 0) {
-//                 const toShow = Math.min(5, resp.hits.total);
-//                 session.send(`First ${toShow} matches:`);
-//                 for (let el of resp.hits.hits.slice(0, toShow)) {
-//                     session.send(el["_source"]["RenderedMessage"]);
-//                 }
-//             }
-//         })
-//         session.send(`querying requested data...`);
-//     }
-// ]);
-
-// dialog.onDefault(builder.DialogAction.send("I don't understand."));

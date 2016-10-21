@@ -18,6 +18,7 @@
   "homepage": "https://github.com/jschen5/revcoderbot#readme",
   "dependencies": {
     "botbuilder": "^3.3.3",
+    "dateformat": "1.0.12",
     "elasticsearch": "^11.0.1",
     "google-url": "0.0.4",
     "moment": "^2.15.1",
